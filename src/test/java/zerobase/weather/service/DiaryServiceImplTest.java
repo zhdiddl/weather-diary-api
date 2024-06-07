@@ -9,7 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.annotation.Transactional;
 import zerobase.weather.domain.DateWeather;
 import zerobase.weather.domain.Diary;
-import zerobase.weather.error.InvalidDate;
+import zerobase.weather.error.InvalidDateException;
 import zerobase.weather.repository.DateWeatherRepository;
 import zerobase.weather.repository.DiaryRepository;
 
@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @Transactional // 실제 DB에 저장하지 않음
-class DiaryServiceTest {
+class DiaryServiceImplTest {
 
     @Mock
     private DiaryRepository diaryRepository;
@@ -31,10 +31,10 @@ class DiaryServiceTest {
 
     @Spy // 특정 메소드를 모의 메소드로 설정 가능
     @InjectMocks
-    private DiaryService diaryService;
+    private DiaryServiceImpl diaryServiceImpl;
 
-    private LocalDate date = LocalDate.now();
-    private String text = "This is a test";
+    private final LocalDate date = LocalDate.now();
+    private final String text = "This is a test";
 
     @Test
     void createDiary() {
@@ -46,7 +46,7 @@ class DiaryServiceTest {
         dateWeather.setTemperature(289.66);
         when(dateWeatherRepository.findAllByDate(date)).thenReturn(List.of(dateWeather));
         //when
-        diaryService.createDiary(date, text);
+        diaryServiceImpl.createDiary(date, text);
         //then
         verify(diaryRepository, times(1)).save(any(Diary.class));
     }
@@ -55,7 +55,7 @@ class DiaryServiceTest {
     void readDiary() {
         //given
         //when
-        List<Diary> diaries = diaryService.readDiary(date);
+        List<Diary> diaries = diaryServiceImpl.readDiary(date);
         //then
         assertNotNull(diaries);
     }
@@ -66,7 +66,7 @@ class DiaryServiceTest {
         //when
         LocalDate invalidDate = LocalDate.of(1010, 1, 1);
         //then
-        assertThrows(InvalidDate.class, () -> diaryService.readDiary(invalidDate));
+        assertThrows(InvalidDateException.class, () -> diaryServiceImpl.readDiary(invalidDate));
     }
 
     @Test
@@ -81,7 +81,7 @@ class DiaryServiceTest {
         when(diaryRepository.getFirstByDate(date)).thenReturn(diary);
 
         // when
-        diaryService.updateDiary(date, updatedText);
+        diaryServiceImpl.updateDiary(date, updatedText);
 
         // then
         assertEquals(diary.getText(), updatedText);
@@ -92,7 +92,7 @@ class DiaryServiceTest {
     void deleteDiary() {
         //given
         //when
-        diaryService.deleteDiary(date);
+        diaryServiceImpl.deleteDiary(date);
         List<Diary> diaries = diaryRepository.findAllByDate(date);
         //then
         assertTrue(diaries.isEmpty());
